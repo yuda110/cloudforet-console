@@ -6,9 +6,9 @@ import { useRoute } from 'vue-router/composables';
 
 import { useQueryClient } from '@tanstack/vue-query';
 
-import { SpaceConnector } from '@cloudforet/core-lib/space-connector';
 import { getCancellableFetcher } from '@cloudforet/core-lib/space-connector/cancellable-fetcher';
 
+import { useDataSourceApi } from '@/api-clients/cost-analysis/data-source/composables/use-data-source-api';
 import { useServiceQueryKey } from '@/query/core/query-key/use-service-query-key';
 
 import { useAppContextStore } from '@/store/app-context/app-context-store';
@@ -33,6 +33,7 @@ const costExplorerSettingsStore = useCostExplorerSettingsStore();
 const appContextStore = useAppContextStore();
 const userStore = useUserStore();
 const queryClient = useQueryClient();
+const { dataSourceAPI } = useDataSourceApi();
 
 const route = useRoute();
 
@@ -46,7 +47,7 @@ const { key: costQuerySetListKey } = useServiceQueryKey('cost-analysis', 'cost-q
 const setCostParams = async () => {
     // Case - Directly access Budget Page
     if (!costQuerySetState.selectedDataSourceId) {
-        const fetcher = getCancellableFetcher(SpaceConnector.clientV2.costAnalysis.dataSource.list);
+        const fetcher = getCancellableFetcher(dataSourceAPI.list);
         try {
             const { status, response } = await fetcher({
                 query: {
@@ -56,7 +57,7 @@ const setCostParams = async () => {
             });
 
             if (status === 'succeed') {
-                const dataSourceId = response.results[0].data_source_id;
+                const dataSourceId = response.results?.[0]?.data_source_id;
                 costQuerySetStore.setSelectedDataSourceId(dataSourceId);
             }
         } catch (e) {

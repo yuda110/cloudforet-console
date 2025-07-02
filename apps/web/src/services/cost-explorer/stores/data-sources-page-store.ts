@@ -16,6 +16,7 @@ import type { CostDataSourceAccountListParameters } from '@/api-clients/cost-ana
 import type { CostDataSourceAccountResetParameters } from '@/api-clients/cost-analysis/data-source-account/schema/api-verbs/reset';
 import type { CostDataSourceAccountUpdateParameters } from '@/api-clients/cost-analysis/data-source-account/schema/api-verbs/update';
 import type { CostDataSourceAccountModel, CostDataSourceAnalyzeModel } from '@/api-clients/cost-analysis/data-source-account/schema/model';
+import { useDataSourceApi } from '@/api-clients/cost-analysis/data-source/composables/use-data-source-api';
 import type { CostDataSourceGetParameters } from '@/api-clients/cost-analysis/data-source/schema/api-verbs/get';
 import type { CostDataSourceListParameters } from '@/api-clients/cost-analysis/data-source/schema/api-verbs/list';
 import type { CostDataSourceSyncParameters } from '@/api-clients/cost-analysis/data-source/schema/api-verbs/sync';
@@ -42,6 +43,7 @@ export const useDataSourcesPageStore = defineStore('page-data-sources', () => {
     const allReferenceStore = useAllReferenceStore();
     const allReferenceGetters = allReferenceStore.getters;
     const userStore = useUserStore();
+    const { dataSourceAPI } = useDataSourceApi();
 
     const state = reactive({
         activeTab: 'detail',
@@ -181,7 +183,7 @@ export const useDataSourcesPageStore = defineStore('page-data-sources', () => {
         },
         fetchDataSourceList: async (params?: CostDataSourceListParameters) => {
             try {
-                const { results, total_count } = await SpaceConnector.clientV2.costAnalysis.dataSource.list<CostDataSourceListParameters, ListResponse<CostDataSourceModel>>(params);
+                const { results, total_count } = await dataSourceAPI.list<CostDataSourceListParameters, ListResponse<CostDataSourceModel>>(params);
                 const analyzeDataList = await actions.fetchLinkedAccountAnalyze();
                 state.dataSourceList = (results || []).map((item) => {
                     const matchingItem = analyzeDataList?.find((entry) => entry.data_source_id === item.data_source_id);
@@ -204,7 +206,7 @@ export const useDataSourcesPageStore = defineStore('page-data-sources', () => {
         fetchDataSourceItem: async (params?: CostDataSourceListParameters) => {
             try {
                 state.dataSourceLoading = true;
-                state.selectedDataSourceItem = await SpaceConnector.clientV2.costAnalysis.dataSource.get<CostDataSourceGetParameters, CostDataSourceModel>(params);
+                state.selectedDataSourceItem = await dataSourceAPI.get<CostDataSourceGetParameters, CostDataSourceModel>(params);
             } catch (e) {
                 ErrorHandler.handleError(e);
                 state.selectedDataSourceItem = {} as DataSourceItem;
@@ -277,7 +279,7 @@ export const useDataSourcesPageStore = defineStore('page-data-sources', () => {
         },
         fetchSyncDatasource: async (params: CostDataSourceSyncParameters) => {
             try {
-                await SpaceConnector.clientV2.costAnalysis.dataSource.sync<CostDataSourceSyncParameters, CostDataSourceModel>(
+                await dataSourceAPI.sync<CostDataSourceSyncParameters, CostDataSourceModel>(
                     params,
                 );
             } catch (e: any) {

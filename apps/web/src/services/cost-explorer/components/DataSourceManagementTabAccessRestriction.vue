@@ -2,13 +2,10 @@
 import { reactive, computed } from 'vue';
 import type { TranslateResult } from 'vue-i18n';
 
-import { SpaceConnector } from '@cloudforet/core-lib/space-connector';
 import { PHeading, PToggleButton, PButtonModal } from '@cloudforet/mirinae';
 
 
-import type {
-    CostDataSourceUpdatePermissionsParameters,
-} from '@/api-clients/cost-analysis/data-source/schema/api-verbs/update-permissions';
+import { useDataSourceApi } from '@/api-clients/cost-analysis/data-source/composables/use-data-source-api';
 import { i18n } from '@/translations';
 
 import { showSuccessMessage } from '@/lib/helper/notice-alert-helper';
@@ -32,6 +29,7 @@ const props = defineProps<Props>();
 
 const dataSourcesPageStore = useDataSourcesPageStore();
 const dataSourcesPageGetters = dataSourcesPageStore.getters;
+const { dataSourceAPI } = useDataSourceApi();
 
 const storeState = reactive({
     selectedItem: computed<DataSourceItem>(() => dataSourcesPageGetters.selectedDataSourceItem),
@@ -85,7 +83,7 @@ const handleChangeToggle = async (item: string, value: boolean) => {
                 ...storeState.selectedItem.permissions?.deny || [],
                 `data.${state.selectedDataType}`,
             ];
-            await SpaceConnector.clientV2.costAnalysis.dataSource.updatePermissions<CostDataSourceUpdatePermissionsParameters>({
+            await dataSourceAPI.updatePermissions({
                 data_source_id: storeState.selectedItem.data_source_id,
                 permissions: {
                     deny: permissions,
@@ -111,7 +109,7 @@ const handleConfirm = async () => {
             const key = denyItem.replace('data.', '');
             return !costDataKeys.includes(key);
         });
-        await SpaceConnector.clientV2.costAnalysis.dataSource.updatePermissions<CostDataSourceUpdatePermissionsParameters>({
+        await dataSourceAPI.updatePermissions({
             data_source_id: storeState.selectedItem.data_source_id,
             permissions: {
                 deny: updatedDenyList,
